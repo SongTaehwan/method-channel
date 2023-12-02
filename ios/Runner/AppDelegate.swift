@@ -8,6 +8,16 @@ import Flutter
 		didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
 	) -> Bool {
 		let controller = window?.rootViewController as! FlutterViewController
+
+		configureMethodChannel(binaryMessenger: controller.binaryMessenger)
+		configurePigeonSetup(binaryMessenger: controller.binaryMessenger)
+
+		return super.application(application, didFinishLaunchingWithOptions: launchOptions)
+	}
+}
+
+extension AppDelegate {
+	private func configureMethodChannel(binaryMessenger: FlutterBinaryMessenger) {
 		let batteryChannel = FlutterMethodChannel(name: "domain/battery", binaryMessenger: controller.binaryMessenger)
 
 		batteryChannel.setMethodCallHandler({ [weak self] (call: FlutterMethodCall, result: @escaping FlutterResult) -> Void in
@@ -23,9 +33,11 @@ import Flutter
 			self?.receiveBatteryLevel(result: result)
 		})
 
+		GeneratedPluginRegistrant.register(with: self)
+	}
 
-		GeneratedPluginRegistrant.register(withRegistry: self)
-		return super.application(application, didFinishLaunchingWithOptions: launchOptions)
+	private func configurePigeonSetup(binaryMessenger: FlutterBinaryMessenger) {
+		MessageApiSetup.setUp(binaryMessenger: binaryMessenger, api: MyMessageApi())
 	}
 }
 
@@ -40,4 +52,18 @@ extension AppDelegate {
 			result(Int(device.batteryLevel * 100))
 		}
 	}
+}
+
+class MyMessageApi: MessageApi {
+	private let messages = [
+		MyMessage(title: "Tom", body: "Hello1", email: "hi@flow.com"),
+		MyMessage(title: "Dom", body: "Hello2", email: "hi@flow.com"),
+		MyMessage(title: "Gom", body: "Hello3", email: "hi@flow.com"),
+		MyMessage(title: "Qom", body: "Hello4", email: "hi@flow.com"),
+	]
+
+	func getMessages(fromEmail: String) throws -> [MyMessage] {
+		return messages.filter { $0.email == fromEmail }
+	}
+
 }
